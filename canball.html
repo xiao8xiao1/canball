@@ -25,24 +25,24 @@
     </head>
     <body>
         <div id="blocker"></div>
-        <script src="../libs/Three.js"></script>
-        <script src="../libs/OrbitControls.js"></script>
-        <script src="../build/cannon.js"></script>
-        <script src="../libs/dat.gui.js"></script>
-        <script src="../libs/cannonhelper.js"></script>
-        <script src="../libs/BallControls.js"></script>        
+        <script src="Three.js"></script>
+        <script src="OrbitControls.js"></script>
+        <script src="cannon.js"></script>
+        <script src="dat.gui.js"></script>
+        <script src="cannonhelper.js"></script>
+        <script src="BallControls.js"></script>        
         <script src="canBallLevels.js"></script>
 <script>
 var c = new function () {
-    this.cameraY = 3.5
-    this.cameraZ = 48
-    this.LookatY = 16
-    this.LookatZ = 0;
+    this.cameraY = 20
+    this.cameraZ = 47
+    this.LookatY = 20
+    this.LookatZ = 0
     this.zoom = 1
     this.disdanceHalf = 20
     this.forceFactor = 100
-    this.groundY = 5
-    this.roomWidth = 12
+    this.groundY = 9
+    this.roomWidth = 30
     this.deskHight = 10
     this.ballRad = 1
     this.canRad = 1
@@ -182,9 +182,9 @@ function clearLevel(){
 
 function initLevel(index){
     //far plane
-    wall = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth*2, 24, 1, 1 ),
+    wall = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth*2, 80, 1, 1 ),
                                   new THREE.MeshLambertMaterial( { color: 0xf8f8f8 } ) );
-    wall.position.set(0, c.groundY, -c.disdanceHalf - 10)
+    wall.position.set(0, 20, -c.disdanceHalf - 10)
     scene.add(wall);
     ballControls.arrTarget.push(wall);
     //ground
