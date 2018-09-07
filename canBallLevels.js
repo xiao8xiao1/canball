@@ -56,10 +56,10 @@ var canBallLevels = function(c, physics, ballControls){
     }
     function addBalls(cnt){
         if (cnt === undefined)
-            cnt = Math.floor(c.roomWidth/(2*c.canRad))
-        var startX = -(cnt*c.canRad) + c.canRad;
+            cnt = Math.floor(c.roomWidth/(2*c.ballRad))
+        var startX = -(cnt*c.ballRad) + c.ballRad;
         for (var i = 0; i < cnt; ++i)
-            addBall(startX + i* 2*c.canRad)
+            addBall(startX + i* 2*c.ballRad)
     }
     function pileUpTBox(xPos,yPos,zPos){
         addStaticBox(c.canRad*2, c.canHeight*2,    xPos,yPos,zPos)
@@ -104,7 +104,7 @@ var canBallLevels = function(c, physics, ballControls){
         // [l,r,h]  = pileUpTBox(0,c.deskHight,zPos)
         // addCan(l, h, zPos)
         // addCan(r, h, zPos)
-        addBall(0)
+        addBalls()
         addSwingBox(c.canRad*2, c.canHeight*2,  0,c.deskHight, zPos+c.canRad*4)   
     })
     levelFuncs.push(function()
@@ -113,25 +113,25 @@ var canBallLevels = function(c, physics, ballControls){
         pileUp111( 0,        c.deskHight,-c.disdanceHalf+c.canRad)
         pileUp111( 4*c.canRad,c.deskHight,-c.disdanceHalf+c.canRad, -0.9)
         pileUp111(-4*c.canRad,c.deskHight,-c.disdanceHalf+c.canRad,  0.9)
-        addBall(0)
+        addBalls()
     })
     levelFuncs.push(function()
     {
         addDesk(c.deskHight, -c.disdanceHalf+c.canRad)
         pileUpLine(3, 0,c.deskHight,-c.disdanceHalf+c.canRad)
-        addBall(0)
+        addBalls()
     })
     levelFuncs.push(function()
     {
         addDesk(c.deskHight, -c.disdanceHalf+c.canRad)
         pileUp121(0,c.deskHight,-c.disdanceHalf+c.canRad)
-        addBall(0)
+        addBalls()
     })
     levelFuncs.push(function()
     {
         addDesk(c.deskHight, -c.disdanceHalf+c.canRad)
         pileUpTriangle(3,3, 0,c.deskHight,-c.disdanceHalf)
-        addBall(0)
+        addBalls()
     })
     levelFuncs.push(function()
     {

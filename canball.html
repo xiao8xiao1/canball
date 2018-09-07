@@ -32,6 +32,8 @@
         <script src="cannonhelper.js"></script>
         <script src="BallControls.js"></script>        
         <script src="canBallLevels.js"></script>
+        <script src="SPE.js"></script>
+        <script src="particle.js"></script>
 <script>
 var c = new function () {
     this.cameraY = 20
@@ -92,7 +94,7 @@ gui.add(c, 'massCan', 0, 20);
 gui.add(c, 'level');
 gui.add(c, 'go');    
 
-var camera, scene, renderer, ballControls, physics, levels;
+var camera, scene, renderer, particle, ballControls, physics, levels;
 // var controls
 function initThree() {
     var container = document.getElementById('blocker');
@@ -127,6 +129,7 @@ function initThree() {
     // controls = new THREE.OrbitControls( camera, renderer.domElement );
     // controls.target.set (0, 5, 0)
     // controls.update();
+    particle = new Particle();    scene.add(particle.initParticles());
     ballControls = new BallControls(camera, renderer.domElement, ballProcess);
     physics = new CannonHelper(0,-10,0, 1/30);  
     levels = new canBallLevels(c, physics, ballControls)
@@ -137,8 +140,9 @@ function animate(time) {
     // controls.update();
     requestAnimationFrame( animate );
     if(time && lastTime){
-        var dt = time - lastTime;
-        physics.update(dt / 1000, 3);
+        var dt = (time - lastTime)/1000;
+        physics.update(dt, 5);
+        particle.tick(dt)
     }
     // cannonDebugRenderer.update();
     renderer.clear();
@@ -150,33 +154,32 @@ function animate(time) {
 
 var wall = null, ground = null 
 function clearLevel(){
-  scene.remove(wall);  
-  wall = null;
-
   if(ground){
     scene.remove(ground)
     physics.world.remove(ground.body)
     ground.body = null; ground = null;
   }
 
-  for (var i = 0; i < ballControls.arrTarget.length; ++i){
-    if (ballControls.arrTarget[i]) {
-      scene.remove(ballControls.arrTarget[i]);
-      if (ballControls.arrTarget[i].body)  
-        physics.world.remove(ballControls.arrTarget[i].body)
-      ballControls.arrTarget[i].body = null; ballControls.arrTarget[i] = null;
+  ballControls.arrTarget.forEach(function(item){
+    if (item){
+      if (item.body){
+        physics.world.remove(item.body)
+        item.body = null;
+      }
+      scene.remove(item)
     }
-  }
+  });  
   ballControls.arrTarget.splice(0,ballControls.arrTarget.length);
 
-  for (var i = 0; i < ballControls.arrBall.length; ++i){
-    if (ballControls.arrBall[i]) {
-      scene.remove(ballControls.arrBall[i]);
-      if (ballControls.arrBall[i].body)
-        physics.world.remove(ballControls.arrBall[i].body)
-      ballControls.arrBall[i].body = null; ballControls.arrBall[i] = null;
+  ballControls.arrBall.forEach(function(item){
+    if (item){
+      if (item.body){
+        physics.world.remove(item.body)
+        item.body = null;
+      }
+      scene.remove(item)
     }
-  }
+  });  
   ballControls.arrBall.splice(0,ballControls.arrBall.length);
 }
 
@@ -188,7 +191,7 @@ function initLevel(index){
     scene.add(wall);
     ballControls.arrTarget.push(wall);
     //ground
-    ground = new THREE.Mesh( new THREE.PlaneGeometry( 12, 3*c.ballRad, 1, 1 ), new THREE.MeshLambertMaterial( { color: 0xf0f0f0 } ) );
+    ground = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth, 3*c.ballRad, 1, 1 ), new THREE.MeshLambertMaterial( { color: 0xf0f0f0 } ) );
     ground.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI / 2);
     ground.body = physics.addBody( ground, 0 );  scene.add(ground);
     ground.body.position.set(0,c.groundY,c.disdanceHalf)
@@ -202,13 +205,19 @@ var ballProcess = {
     // controls.enabled = false;
     console.log(camera.position)
   },
-  throwBall: function (ball, to,delta){
+  throwBall : function (ball, to,delta){
     // controls.enabled = true;
     to.sub(ball.position).normalize()
     to.divideScalar(delta).multiplyScalar (c.forceFactor)
-    console.log(to)
-    ball.body.applyLocalImpulse(to, this.zero);
     ball.body.wakeUp();
+    ball.body.applyLocalImpulse(to, this.zero);
+    ball.body.addEventListener("collide",function(e){
+        if (e.body !== ground.body){
+            var pos = new THREE.Vector3()
+            e.contact.bi.position.vadd(e.contact.ri, pos)
+            particle.createExplosion(pos)
+        }
+    })
   }
 }
 

@@ -220,7 +220,7 @@ var CannonHelper = function  (gravityX,gravityY,gravityZ, timeStep) {
         }
     }
 
-    this.update = function () {
+    this.update = function (timeSinceLastCalled, maxSubSteps) {
         for (var b in this.bodies) {
             var body = this.bodies[b];
 
@@ -231,8 +231,10 @@ var CannonHelper = function  (gravityX,gravityY,gravityZ, timeStep) {
                 this.world.remove(body)
             }
         }
-
-        this.world.step(this.timeStep);
+        if (this.timeStep*maxSubSteps < timeSinceLastCalled){
+            console.log(this.timeStep , timeSinceLastCalled, maxSubSteps)
+        }
+        this.world.step(this.timeStep , timeSinceLastCalled, maxSubSteps);
     }
 }
 
