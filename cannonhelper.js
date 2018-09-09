@@ -84,7 +84,7 @@ var CannonHelper = function  (gravityX,gravityY,gravityZ, timeStep) {
     this.world.gravity.set(gravityX,gravityY,gravityZ);
     this.world.broadphase = new CANNON.NaiveBroadphase();
     this.world.allowSleep = true;
-    this.world.solver.iterations = 50;
+    this.world.solver.iterations = 200;
 
     this.world.defaultContactMaterial.contactEquationStiffness = 5e6;
     this.world.defaultContactMaterial.contactEquationRelaxation = 3;

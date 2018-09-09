@@ -24,7 +24,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     </head>
     <body>
-        <div id="blocker"></div>
+        <!-- <div id="blocker"></div> -->
         <script src="Three.js"></script>
         <script src="OrbitControls.js"></script>
         <script src="cannon.js"></script>
@@ -36,6 +36,7 @@
         <script src="particle.js"></script>
 <script>
 var c = new function () {
+    this.gravity = 20
     this.cameraY = 20
     this.cameraZ = 47
     this.LookatY = 20
@@ -51,14 +52,16 @@ var c = new function () {
     this.canHeight = 4
     this.massBall = 5
     this.massCan = 10
-    this.level = 0
+    this.level = 5
     this.go = function() {
         clearLevel()
+        levels.setPara(c)
         initLevel(this.level)
         console.log('c=', c)
     }
 };
 var gui = new dat.GUI();
+gui.add(c, 'gravity', 10, 100);
 gui.add(c, 'cameraY', 0, 100).onChange(function(y){
                         camera.position.set(0,y,c.cameraZ)
                         // camera.updateProjectionMatrix ()
@@ -91,14 +94,16 @@ gui.add(c, 'canRad', 0, 20);
 gui.add(c, 'canHeight', 0, 20);
 gui.add(c, 'massBall', 0, 20);
 gui.add(c, 'massCan', 0, 20);
-gui.add(c, 'level');
+gui.add(c, 'level')
 gui.add(c, 'go');    
 
 var camera, scene, renderer, particle, ballControls, physics, levels;
 // var controls
 function initThree() {
-    var container = document.getElementById('blocker');
-    var W = container.offsetWidth, H = container.offsetHeight;
+    // var container = document.getElementById('blocker');
+    // var W = container.offsetWidth, H = container.offsetHeight;
+
+    var W = window.innerWidth, H = window.innerHeight;
     console.log(window.innerHeight)
     // scene
     scene = new THREE.Scene();
@@ -124,24 +129,25 @@ function initThree() {
     // renderer.setClearColor( scene.fog.color );
     renderer.autoClear = false; // To allow render overlay on top of sprited sphere
     var axesHelper = new THREE.AxesHelper( 5 );  scene.add( axesHelper );
-    container.appendChild( renderer.domElement );
+    var container = document.createElement( 'div' );  document.body.appendChild( container );  container.appendChild( renderer.domElement );
 
     // controls = new THREE.OrbitControls( camera, renderer.domElement );
     // controls.target.set (0, 5, 0)
     // controls.update();
     particle = new Particle();    scene.add(particle.initParticles());
     ballControls = new BallControls(camera, renderer.domElement, ballProcess);
-    physics = new CannonHelper(0,-10,0, 1/30);  
+    physics = new CannonHelper(0,-c.gravity,0, 1/60);  
     levels = new canBallLevels(c, physics, ballControls)
 }
-var lastTime;
+var lastTime;var i;
 function animate(time) {
     //TWEEN.update();
     // controls.update();
     requestAnimationFrame( animate );
     if(time && lastTime){
         var dt = (time - lastTime)/1000;
-        physics.update(dt, 5);
+        // for (i = 0; i < 10; ++i)
+            physics.update(dt, 5);
         particle.tick(dt)
     }
     // cannonDebugRenderer.update();
@@ -186,7 +192,7 @@ function clearLevel(){
 function initLevel(index){
     //far plane
     wall = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth*2, 80, 1, 1 ),
-                                  new THREE.MeshLambertMaterial( { color: 0xf8f8f8 } ) );
+                                  new THREE.MeshLambertMaterial( { color: 0xf8f8f8 ,visible:false} ) );
     wall.position.set(0, 20, -c.disdanceHalf - 10)
     scene.add(wall);
     ballControls.arrTarget.push(wall);

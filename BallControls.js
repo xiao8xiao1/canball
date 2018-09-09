@@ -39,7 +39,7 @@ var BallControls = function(camera, domElement, ballProcess) {
         // Find mesh from a ray
         var pointer;
         if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) 
-            pointer = e.touches[0];
+            pointer = e.changedTouches[0];
         else
             pointer = { clientX: e.pageX, clientY: e.pageY };
         var entity = intersectObjects(pointer.clientX, pointer.clientY, scope.arrBall)
@@ -54,17 +54,20 @@ var BallControls = function(camera, domElement, ballProcess) {
             // if(idx !== -1){
             // }
         }
+        e.preventDefault();
+        e.stopPropagation();        
     }
     function onMouseMove(e){
         if ( scope.enabled === false ) return;
         if (!selectBall) return;
-        //event.stopPropagation();
         // Move and project on the plane
         // if (gplane) {
         //    var pos = projectOntoPlane(e.clientX,e.clientY,gplane,camera);
         //    if(pos){
         //    }
         // }
+        e.preventDefault();
+        e.stopPropagation();
     }
     function onMouseUp(e) {
         if ( scope.enabled === false ) return;
@@ -72,7 +75,7 @@ var BallControls = function(camera, domElement, ballProcess) {
         var delta = clock.getDelta();
         var pointer;
         if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) 
-            pointer = e.touches[0];
+            pointer = e.changedTouches[0];
         else
             pointer = { clientX: e.pageX, clientY: e.pageY };
         var entity = intersectObjects(pointer.clientX, pointer.clientY, scope.arrTarget)        
@@ -81,6 +84,8 @@ var BallControls = function(camera, domElement, ballProcess) {
         }
         
         selectBall = null;
+        e.preventDefault();
+        e.stopPropagation();
     }
     function intersectObjects( clientX, clientY, objects ) {
         var x = ( clientX - rect.left ) / rect.width;
