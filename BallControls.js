@@ -95,7 +95,6 @@ var BallControls = function(camera, domElement, ballProcess) {
         var intersections = ray.intersectObjects( objects, false );
         return intersections[ 0 ] ? intersections[ 0 ] : false;
     }
-
 }
 // BallControls.prototype = Object.assign( Object.create( THREE.EventDispatcher.prototype ), 
 //                                                         {constructor: BallControls})

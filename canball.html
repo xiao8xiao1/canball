@@ -27,14 +27,16 @@
         <!-- <div id="blocker"></div> -->
         <script src="Three.js"></script>
         <script src="OrbitControls.js"></script>
-        <script src="cannon.js"></script>
+        <!-- <script src="cannon.js"></script> -->
         <script src="dat.gui.js"></script>
-        <script src="cannonhelper.js"></script>
+        <script src="oimo.js"></script>
+        <!-- <script src="cannonhelper.js"></script> -->
+        <script src="oimoHelper.js"></script>
         <script src="BallControls.js"></script>        
         <script src="canBallLevels.js"></script>
         <script src="SPE.js"></script>
         <script src="particle.js"></script>
-<script>
+<script>  
 var c = new function () {
     this.gravity = 20
     this.cameraY = 20
@@ -52,7 +54,7 @@ var c = new function () {
     this.canHeight = 4
     this.massBall = 5
     this.massCan = 10
-    this.level = 5
+    this.level = 0
     this.go = function() {
         clearLevel()
         levels.setPara(c)
@@ -97,8 +99,8 @@ gui.add(c, 'massCan', 0, 20);
 gui.add(c, 'level')
 gui.add(c, 'go');    
 
-var camera, scene, renderer, particle, ballControls, physics, levels;
-// var controls
+var camera, scene, renderer, particle, ballControls, physics,world, levels;
+var controls = {}
 function initThree() {
     // var container = document.getElementById('blocker');
     // var W = container.offsetWidth, H = container.offsetHeight;
@@ -123,7 +125,7 @@ function initThree() {
     var d = 20;
     light.position.set( 40, 20, 30 );
     scene.add( light );
-    renderer = new THREE.WebGLRenderer( { alpha :true, antialias: true } );
+    renderer = new THREE.WebGLRenderer( { alpha :true, antialias: true, precision: "mediump" } );
     renderer.setSize( W, H );
     renderer.setPixelRatio(window.devicePixelRatio);
     // renderer.setClearColor( scene.fog.color );
@@ -131,25 +133,30 @@ function initThree() {
     var axesHelper = new THREE.AxesHelper( 5 );  scene.add( axesHelper );
     var container = document.createElement( 'div' );  document.body.appendChild( container );  container.appendChild( renderer.domElement );
 
-    // controls = new THREE.OrbitControls( camera, renderer.domElement );
+    //controls = new THREE.OrbitControls( camera, renderer.domElement );
     // controls.target.set (0, 5, 0)
     // controls.update();
     particle = new Particle();    scene.add(particle.initParticles());
     ballControls = new BallControls(camera, renderer.domElement, ballProcess);
-    physics = new CannonHelper(0,-c.gravity,0, 1/60);  
-    levels = new canBallLevels(c, physics, ballControls)
+    // physics = new CannonHelper(0,-c.gravity,0, 1/60);  world=physics.world;
+    hp = new OimoHelper(scene);
+    world = new OIMO.World({gravity: [0,-9.8,0]})
+    levels = new canBallLevels(c, hp, ballControls)
 }
 var lastTime;var i;
 function animate(time) {
     //TWEEN.update();
     // controls.update();
     requestAnimationFrame( animate );
-    if(time && lastTime){
-        var dt = (time - lastTime)/1000;
-        // for (i = 0; i < 10; ++i)
-            physics.update(dt, 5);
-        particle.tick(dt)
-    }
+
+    // if(time && lastTime){
+    //     var dt = (time - lastTime)/1000;
+    //     // for (i = 0; i < 10; ++i)
+    //         physics.update(dt, 5);
+    //     particle.tick(dt)
+    // }
+    world.step();
+
     // cannonDebugRenderer.update();
     renderer.clear();
     renderer.render( scene, camera );
@@ -162,14 +169,14 @@ var wall = null, ground = null
 function clearLevel(){
   if(ground){
     scene.remove(ground)
-    physics.world.remove(ground.body)
+    world.remove(ground.body)
     ground.body = null; ground = null;
   }
 
   ballControls.arrTarget.forEach(function(item){
     if (item){
       if (item.body){
-        physics.world.remove(item.body)
+        world.removeRigidBody(item.body)
         item.body = null;
       }
       scene.remove(item)
@@ -180,13 +187,45 @@ function clearLevel(){
   ballControls.arrBall.forEach(function(item){
     if (item){
       if (item.body){
-        physics.world.remove(item.body)
+        world.removeRigidBody(item.body)
         item.body = null;
       }
       scene.remove(item)
     }
   });  
   ballControls.arrBall.splice(0,ballControls.arrBall.length);
+}
+
+function checkResult(){
+    if (ballControls.arrBall.length === 0 && levels.nTarget > 0){
+        console.log('failed')
+        return;
+    }
+    if (levels.nTarget <= 0){
+        console.log('succeed')
+        return;
+    }
+    ballControls.arrBall.forEach(function(item, index) {
+        if (item.position.y < 0){
+            if (item.body){
+                world.removeRigidBody(item.body)
+                item.body = null;
+            }
+            scene.remove(item)
+            ballControls.arrBall.splice(index,1)
+        }
+    });
+    ballControls.arrTarget.forEach(function(item, index) {
+        if (item.position.y < 0){
+            if (item.body){
+                world.removeRigidBody(item.body)
+                item.body = null;
+            }
+            scene.remove(item)
+            ballControls.arrTarget.splice(index,1)
+            levels.nTarget--;
+        }
+    });
 }
 
 function initLevel(index){
@@ -197,26 +236,29 @@ function initLevel(index){
     scene.add(wall);
     ballControls.arrTarget.push(wall);
     //ground
-    ground = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth, 3*c.ballRad, 1, 1 ), new THREE.MeshLambertMaterial( { color: 0xf0f0f0 } ) );
-    ground.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI / 2);
-    ground.body = physics.addBody( ground, 0 );  scene.add(ground);
-    ground.body.position.set(0,c.groundY,c.disdanceHalf)
-    
+    // ground = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth, 3*c.ballRad, 1, 1 ), new THREE.MeshLambertMaterial( { color: 0xf0f0f0 } ) );
+    // ground.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI / 2);
+    // ground.body = physics.addBody( ground, 0 );  scene.add(ground);
+    // ground.body.position.set(0,c.groundY,c.disdanceHalf)
+    ground = hp.addBox(c.roomWidth, 0.2,3*c.ballRad,  0,c.groundY -0.1 ,c.disdanceHalf);
+
     levels.go(index)
 }
 
 var ballProcess = {
-  zero : new CANNON.Vec3(0,0,0),
+//   zero : new CANNON.Vec3(0,0,0),
+  zero : new THREE.Vector3(),
   selectBall : function (){
-    // controls.enabled = false;
-    console.log(camera.position)
+    controls.enabled = false;
+    checkResult()
   },
   throwBall : function (ball, to,delta){
-    // controls.enabled = true;
+    controls.enabled = true;
     to.sub(ball.position).normalize()
     to.divideScalar(delta).multiplyScalar (c.forceFactor)
-    ball.body.wakeUp();
-    ball.body.applyLocalImpulse(to, this.zero);
+    // ball.body.wakeUp();
+    // ball.body.applyLocalImpulse(to, this.zero);
+    ball.body.applyImpulse(this.zero, to);
     ball.body.addEventListener("collide",function(e){
         if (e.body !== ground.body){
             var pos = new THREE.Vector3()
