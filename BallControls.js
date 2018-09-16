@@ -17,9 +17,11 @@ var BallControls = function(camera, domElement, ballProcess) {
 
     var selectBall = null;
     var ray = new THREE.Raycaster();
+    var startPointer = new THREE.Vector2();
+    var endPointer = new THREE.Vector2();
 
     //wx.onTouchStart(onMouseDown)
-    // wx.onTouchMove(onMouseMove)
+    //wx.onTouchMove(onMouseMove)
     //wx.onTouchEnd(onMouseUp)
 	domElement.addEventListener( 'touchstart', onMouseDown, false );
 	domElement.addEventListener( 'touchend', onMouseUp, false );
@@ -38,11 +40,16 @@ var BallControls = function(camera, domElement, ballProcess) {
         clock.getDelta();
         // Find mesh from a ray
         var pointer;
-        if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) 
-            pointer = e.changedTouches[0];
-        else
-            pointer = { clientX: e.pageX, clientY: e.pageY };
-        var entity = intersectObjects(pointer.clientX, pointer.clientY, scope.arrBall)
+        if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) {
+            startPointer.x = e.changedTouches[0].clientX;
+            startPointer.y = e.changedTouches[0].clientY;
+        }            
+        else{
+            startPointer.x = e.pageX;
+            startPointer.y = e.pageY;
+        }
+            
+        var entity = intersectObjects(startPointer.x, startPointer.y, scope.arrBall)
         // var pos = entity.point;
         if(/*pos &&*/ entity){
             selectBall = entity.object
@@ -74,13 +81,18 @@ var BallControls = function(camera, domElement, ballProcess) {
         if (!selectBall) return;
         var delta = clock.getDelta();
         var pointer;
-        if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) 
-            pointer = e.changedTouches[0];
-        else
-            pointer = { clientX: e.pageX, clientY: e.pageY };
-        var entity = intersectObjects(pointer.clientX, pointer.clientY, scope.arrTarget)        
-        if(entity){
-            ballProcess.throwBall(selectBall, entity.point, delta)     
+        if (typeof TouchEvent !== 'undefined' && e instanceof TouchEvent) {
+            endPointer.x = e.changedTouches[0].clientX;
+            endPointer.y = e.changedTouches[0].clientY;
+        }            
+        else{
+            endPointer.x = e.pageX;
+            endPointer.y = e.pageY;
+        }           
+        var entity = intersectObjects(endPointer.x, endPointer.y, scope.arrTarget)
+        if(entity)
+        {
+            ballProcess.throwBall(selectBall, entity.point, delta, endPointer.sub(startPointer).length())
         }
         
         selectBall = null;

@@ -13,14 +13,12 @@ var OimoHelper = function  (scene) {
     mats['box']    = new THREE[materialType]( {shininess: 10, map: basicTexture(2), name:'box' } );
     mats['cyl']    = new THREE[materialType]( {shininess: 10, map: basicTexture(4), name:'cyl' } );
 
-    this.addBall = function(w, x,y,z, mType){
-        var o ={type:'sphere', size:[w*0.5], pos:[x,y,z], world:world};
-        if (mType === undefined)
+    this.addBall = function(w, x,y,z, o){
+        if (o === undefined)  o={};
+        o.type = 'sphere';  o.world=world;
+        o.size=[w*0.5]; o.pos=[x,y,z];
+        if (o.move === undefined)
             o.move = true;
-        else if  (mType === 'static')
-            o.move = false;
-        else if  (mType === 'kine')
-            o.kinematic = true;
             
         var b = world.add(o);
         var m = new THREE.Mesh( geos.sphere, mats.sph );
@@ -30,14 +28,11 @@ var OimoHelper = function  (scene) {
         scene.add(m)
         return m;
     }
-    this.addBox = function(w,h,d, x,y,z, mType){
-        var o = {type:'box', size:[w,h,d], pos:[x,y,z], world:world}
-        if (mType === undefined)
-            o.move = false;
-        else if  (mType === 'move')
-            o.move = true;
-        else if  (mType === 'kine')
-            o.kinematic = true;
+
+    this.addBox = function(w,h,d, x,y,z, o){
+        if (o === undefined)  o={};
+        o.type = 'box';  o.world=world;
+        o.size=[w,h,d]; o.pos=[x,y,z];
 
         var b = world.add(o);
         var m = new THREE.Mesh( geos.box, mats.box );
@@ -47,14 +42,14 @@ var OimoHelper = function  (scene) {
         scene.add(m)
         return m;
     }
-    this.addCan = function(w,h, x,y,z, mType){
-        var o = {type:'cylinder', size:[w*0.5,h], pos:[x,y,z], world:world}
-        if (mType === undefined)
+
+    this.addCan = function(w,h, x,y,z, o){
+        if (o === undefined)  o={};
+        o.type = 'cylinder';  o.world=world;
+        o.size=[w*0.5,h]; o.pos=[x,y,z];
+        if (o.move === undefined)
             o.move = true;
-        else if  (mType === 'static')
-            o.move = false;
-        else if  (mType === 'kine')
-            o.kinematic = true;        
+
         var b = world.add(o);
         var m = new THREE.Mesh( geos.cylinder, mats.cyl );
         m.scale.set( w*0.5, h, w*0.5 );

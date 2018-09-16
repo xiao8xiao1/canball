@@ -5593,9 +5593,6 @@
 	    * Update the contact manifold.
 	    */
 	    updateManifold: function () {
-
-	        this.constraint.restitution =this.mixRestitution(this.shape1.restitution,this.shape2.restitution);
-	        this.constraint.friction=this.mixFriction(this.shape1.friction,this.shape2.friction);
 	        var numBuffers=this.manifold.numPoints;
 	        var i = numBuffers;
 	        while(i--){
@@ -5618,8 +5615,18 @@
 	            this.close = false;
 	            this.dist = _Math.INF;
 	            return;
-	        }
-
+			}
+            if (numBuffers===0){
+                if (this.body1.onCollide){
+                    this.body1.onCollide(this.body2, this.points[0].position)
+                }
+                if (this.body2.onCollide){
+                    this.body2.onCollide(this.body1, this.points[0].position)
+                }               
+			}
+	        this.constraint.restitution =this.mixRestitution(this.shape1.restitution,this.shape2.restitution);
+			this.constraint.friction=this.mixFriction(this.shape1.friction,this.shape2.friction);
+						
 	        if( this.touching || this.dist < 0.001 ) this.close = true;
 	        this.touching=true;
 	        i = num;
@@ -11066,7 +11073,7 @@
 	            dy *= invLen;
 	            dz *= invLen;
 	            ///result.addContactInfo(psx+dx*rads,psy+dy*rads,psz+dz*rads,dx,dy,dz,len-rads,s,c,0,0,false);
-	            manifold.addPoint( psx + dx * rads, psy + dy * rads, psz + dz * rads, dx, dy, dz, len - rads, this.flip );
+	            manifold.addPoint( psx + dx * rads, psy + dy * rads, psz + dz * rads, dx, dy, dz, len - rad2, this.flip );
 	        }
 
 	    }
@@ -11388,7 +11395,7 @@
 	    // The gravity in the world.
 	    this.gravity = new Vec3(0,-9.8,0);
 	    if( o.gravity !== undefined ) this.gravity.fromArray( o.gravity );
-
+		this.gVel = new Vec3().addScaledVector( this.gravity, this.timeStep );
 
 
 	    var numShapeTypes = 5;//4;//3;
@@ -11458,11 +11465,14 @@
 	        this.timer = null;
 
 	    },
-
+		setTimeStep: function(va){
+			this.timeStep = va;
+			this.gVel = new Vec3().addScaledVector( this.gravity, this.timeStep );
+		},
 	    setGravity: function ( ar ) {
 
 	        this.gravity.fromArray( ar );
-
+			this.gVel = new Vec3().addScaledVector( this.gravity, this.timeStep );
 	    },
 
 	    getInfo: function () {
@@ -11912,7 +11922,7 @@
 	            } while( stackCount != 0 );
 
 	            // update velocities
-	            var gVel = new Vec3().addScaledVector( this.gravity, this.timeStep );
+	            //var gVel = new Vec3().addScaledVector( this.gravity, this.timeStep );
 	            /*var gx=this.gravity.x*this.timeStep;
 	            var gy=this.gravity.y*this.timeStep;
 	            var gz=this.gravity.z*this.timeStep;*/
@@ -11921,7 +11931,7 @@
 	            //or(var j=0, l=islandNumRigidBodies; j<l; j++){
 	                body = this.islandRigidBodies[j];
 	                if(body.isDynamic){
-	                    body.linearVelocity.addEqual(gVel);
+	                    body.linearVelocity.addEqual(this.gVel);
 	                    /*body.linearVelocity.x+=gx;
 	                    body.linearVelocity.y+=gy;
 	                    body.linearVelocity.z+=gz;*/

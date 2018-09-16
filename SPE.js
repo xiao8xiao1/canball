@@ -2382,7 +2382,8 @@ SPE.Group.prototype._triggerSingleEmitter = function( pos ) {
 
     // TODO:
     // - Make sure buffers are update with thus new position.
-    if ( pos instanceof THREE.Vector3 ) {
+    // if ( pos instanceof THREE.Vector3 ) 
+    {
         emitter.position.value.copy( pos );
 
         // Trigger the setter for this property to force an
@@ -2412,7 +2413,8 @@ SPE.Group.prototype._triggerSingleEmitter = function( pos ) {
 SPE.Group.prototype.triggerPoolEmitter = function( numEmitters, position ) {
     'use strict';
 
-    if ( typeof numEmitters === 'number' && numEmitters > 1 ) {
+    if ( typeof numEmitters === 'number' && numEmitters > 1 ) 
+    {
         for ( var i = 0; i < numEmitters; ++i ) {
             this._triggerSingleEmitter( position );
         }

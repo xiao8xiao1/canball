@@ -13,78 +13,55 @@ var canBallLevels = function(c, hp, ballControls){
         ballRad = c.ballRad
         ballWidth = 2*c.ballRad
     }
-    this.nTarget = 0
+    this.nearestZ = -c.disdanceHalf
+    _this = this;
+
     this.go = function(index){
         this.nTarget = 0
         if (index < levelFuncs.length)
             levelFuncs[index]();
     }
     function addDesk(h, zPos){
-        // var desk = new THREE.Mesh(new THREE.BoxGeometry(c.roomWidth, h, canRad*2), material);
-        // scene.add(desk);
-        // desk.body = hp.addBody( desk, 0 ); 
-        // desk.body.position.set(0, h/2, zPos);
-        var desk = hp.addBox(c.roomWidth, h, canRad*2,  0, h/2, zPos)
+        var desk = hp.addBox(c.roomWidth,h,canRad*2,  0, h/2, zPos);
         ballControls.arrTarget.push(desk);
     }
-    function addStaticBox(w, h, xPos,yPos,zPos){
-        // var desk = new THREE.Mesh(new THREE.BoxGeometry(w, h, canRad*2), material);
-        // scene.add(desk);
-        // desk.body = hp.addBody( desk, 0 ); 
-        // desk.body.position.set(xPos, yPos+h/2, zPos);
-
-        var desk = hp.addBox(w, h, canRad*2,  xPos, yPos+h/2, zPos)
-        ballControls.arrTarget.push(desk);
-    }
-    function addMovBox(w, h, xPos,yPos,zPos){
-        // var desk = new THREE.Mesh(new THREE.BoxGeometry(w, h, canRad*2), material);
-        // scene.add(desk);
-        // desk.body = hp.addBody( desk, c.massCan*2 ); 
-        // desk.body.position.set(xPos, yPos+h/2, zPos);
-        var desk = hp.addBox(w, h, canRad*2,  xPos, yPos+h/2, zPos, 'move')
+    function addBox(w, h, xPos,yPos,zPos, o){
+        var desk = hp.addBox(w, h, canRad*2,  xPos, yPos+h/2, zPos, o)
         ballControls.arrTarget.push(desk);
         return desk;
     }
-    function addCan(xPos,yPos,zPos)
+    function addCan(xPos,yPos,zPos,o)
     {
-        // var can = new THREE.Mesh(new THREE.CylinderGeometry(canRad,canRad,canHeight,20,20,false), material);
-        // can.body = hp.addBody( can, c.massCan );  scene.add(can);
-        // can.body.position.set(xPos,yPos+canHeight/2,zPos);
-        var can = hp.addCan(canWidth,canHeight,  xPos,yPos+canHeight/2,zPos)
-        ballControls.arrTarget.push(can);   
-        this.nTarget++;
+        var can = hp.addCan(canWidth,canHeight,  xPos,yPos+canHeight/2,zPos,o)
+        ballControls.arrTarget.push(can); 
+        _this.nTarget++;
+        if (zPos + canRad > _this.nearestZ)  _this.nearestZ = zPos + canRad;
+        return can;
     }
-    function addBall(xPos)
+    function addBall(xPos, o)
     {
-        // var ball = new THREE.Mesh(new THREE.SphereGeometry(ballRad, 20, 20), material);
-        // ball.body = hp.addBody( ball, c.massBall );  scene.add(ball);
-        // ball.body.position.set(xPos, c.groundY+ballRad , c.disdanceHalf);
-        var ball = hp.addBall(ballWidth, xPos, c.groundY+ballRad , c.disdanceHalf)
+        var ball = hp.addBall(ballWidth, xPos, c.groundY+ballRad , c.disdanceHalf, o)
         ballControls.arrBall.push(ball);
-    }    
+    }
     function addBalls(cnt){
         if (cnt === undefined)
             cnt = Math.floor(c.roomWidth/(2*ballRad))
         var startX = -(cnt*ballRad) + ballRad;
         for (var i = 0; i < cnt; ++i)
             addBall(startX + i* 2*ballRad)
-    }    
+    }   
     function addSwingBox(w, h, xPos,yPos,zPos){
-        var desk = addMovBox(w, h, xPos,yPos,zPos)
-        var dist = h/2+1
-        var ball = new THREE.Mesh(new THREE.SphereGeometry(ballRad, 20, 20), material);
-        ball.body = hp.addBody( ball, 0);  scene.add(ball);
-        ball.body.position.set(xPos, yPos+h/2+dist+ballRad, zPos);
+        var desk = addBox(w, h, xPos,yPos,zPos, {move:true})
+        var ball = hp.addBall(ballWidth, xPos, yPos+h+ballRad+w/2, zPos, {move:false})
         ballControls.arrTarget.push(ball);
-        desk.body.mass = 100
-        hp.world.addConstraint(new CANNON.PointToPointConstraint(desk.body,new CANNON.Vec3(0,dist,0),ball.body));
-        desk.body.velocity.set(10,5,0);
-        desk.body.linearDamping=0;
-        desk.body.angularDamping=0;
+        var spring = [2, 0.3];
+        world.add({ type:'jointHinge', body1:ball.body, body2:desk.body, pos1:[0, -ballRad-w/2, 0], pos2:[0, h/2, 0],
+                    collision:false, spring:spring, min:90, max:-90, axe1:[0,0,1], axe2:[0,0,1]  });
+        desk.body.applyImpulse(new OIMO.Vec3(0,0,0), new OIMO.Vec3(100,0,0));
     }
     function pileUpTBox(xPos,yPos,zPos){
-        addStaticBox(canRad*2, canHeight*2,    xPos,yPos,zPos)
-        addMovBox(canHeight*2, canRad,  xPos,yPos+canHeight*2,zPos)
+        addBox(canRad*2, canHeight*2,    xPos,yPos,zPos)
+        addBox(canHeight*2, canRad,  xPos,yPos+canHeight*2,zPos, {move:true})
         return [xPos-canHeight+canRad, xPos+canHeight-canRad, yPos+canHeight*2+canRad]
     }
     function pileUpTriangle(xCnt, yCnt, xPos,yPos,zPos){

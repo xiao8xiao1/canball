@@ -37,6 +37,48 @@
         <script src="SPE.js"></script>
         <script src="particle.js"></script>
 <script>  
+var gui = new dat.GUI();
+function initGui(){
+    gui.add(c, 'gravity', 10, 100).onChange(function(y){
+        world.setGravity([0,-y,0])
+    }),
+    gui.add(c, 'cameraY', 0, 100).onChange(function(y){
+                            camera.position.set(0,y,c.cameraZ)
+                            // camera.updateProjectionMatrix ()
+    });
+    gui.add(c, 'cameraZ', 0, 100).onChange(function(z){
+                            camera.position.set(0,c.cameraY,z)
+                            // camera.updateProjectionMatrix ()
+    });
+    gui.add(c, 'LookatY', -50, 50).onChange(function(y){
+                            camera.lookAt(0, y, c.LookatZ)
+                            // camera.updateMatrixWorld();
+                            // console.log('y z',c.LookatY, c.LookatZ)
+    });
+    gui.add(c, 'LookatZ', 0, 100).onChange(function(z){
+                            camera.lookAt(0, c.LookatY, z)
+                            // camera.updateMatrixWorld();
+                            // console.log('y z',c.LookatY, c.LookatZ)
+    });
+    gui.add(c, 'zoom', 0, 10).onChange(function(z){
+                            camera.zoom = z
+                            camera.updateProjectionMatrix();
+    });
+    gui.add(c, 'disdanceHalf', 5, 50);
+    gui.add(c, 'forceFactor', 0, 200);
+    gui.add(c, 'groundY', -5, 10);
+    gui.add(c, 'roomWidth', 5, 50);
+    gui.add(c, 'deskHight', 5, 100);
+    gui.add(c, 'ballRad', 0, 20);
+    gui.add(c, 'canRad', 0, 20);
+    gui.add(c, 'canHeight', 0, 20);
+    gui.add(c, 'massBall', 0, 20);
+    gui.add(c, 'massCan', 0, 20);
+    gui.add(c, 'shootHeight', 0, 10);
+    gui.add(c, 'level')
+    gui.add(c, 'go');
+}
+//to wx
 var c = new function () {
     this.gravity = 20
     this.cameraY = 20
@@ -45,7 +87,7 @@ var c = new function () {
     this.LookatZ = 0
     this.zoom = 1
     this.disdanceHalf = 20
-    this.forceFactor = 100
+    this.forceFactor = 0.1
     this.groundY = 9
     this.roomWidth = 30
     this.deskHight = 10
@@ -54,6 +96,7 @@ var c = new function () {
     this.canHeight = 4
     this.massBall = 5
     this.massCan = 10
+    this.shootHeight = 4
     this.level = 0
     this.go = function() {
         clearLevel()
@@ -62,44 +105,8 @@ var c = new function () {
         console.log('c=', c)
     }
 };
-var gui = new dat.GUI();
-gui.add(c, 'gravity', 10, 100);
-gui.add(c, 'cameraY', 0, 100).onChange(function(y){
-                        camera.position.set(0,y,c.cameraZ)
-                        // camera.updateProjectionMatrix ()
-});
-gui.add(c, 'cameraZ', 0, 100).onChange(function(z){
-                        camera.position.set(0,c.cameraY,z)
-                        // camera.updateProjectionMatrix ()
-});
-gui.add(c, 'LookatY', -50, 50).onChange(function(y){
-                        camera.lookAt(0, y, c.LookatZ)
-                        // camera.updateMatrixWorld();
-                        // console.log('y z',c.LookatY, c.LookatZ)
-});
-gui.add(c, 'LookatZ', 0, 100).onChange(function(z){
-                        camera.lookAt(0, c.LookatY, z)
-                        // camera.updateMatrixWorld();
-                        // console.log('y z',c.LookatY, c.LookatZ)
-});
-gui.add(c, 'zoom', 0, 10).onChange(function(z){
-                        camera.zoom = z
-                        camera.updateProjectionMatrix();
-});
-gui.add(c, 'disdanceHalf', 5, 50);
-gui.add(c, 'forceFactor', 50, 200);
-gui.add(c, 'groundY', -5, 10);
-gui.add(c, 'roomWidth', 5, 50);
-gui.add(c, 'deskHight', 5, 100);
-gui.add(c, 'ballRad', 0, 20);
-gui.add(c, 'canRad', 0, 20);
-gui.add(c, 'canHeight', 0, 20);
-gui.add(c, 'massBall', 0, 20);
-gui.add(c, 'massCan', 0, 20);
-gui.add(c, 'level')
-gui.add(c, 'go');    
-
 var camera, scene, renderer, particle, ballControls, physics,world, levels;
+var velocitySqLimit,oldTimeStep
 var controls = {}
 function initThree() {
     // var container = document.getElementById('blocker');
@@ -133,20 +140,21 @@ function initThree() {
     var axesHelper = new THREE.AxesHelper( 5 );  scene.add( axesHelper );
     var container = document.createElement( 'div' );  document.body.appendChild( container );  container.appendChild( renderer.domElement );
 
-    //controls = new THREE.OrbitControls( camera, renderer.domElement );
+    // controls = new THREE.OrbitControls( camera, renderer.domElement );
     // controls.target.set (0, 5, 0)
     // controls.update();
     particle = new Particle();    scene.add(particle.initParticles());
     ballControls = new BallControls(camera, renderer.domElement, ballProcess);
     // physics = new CannonHelper(0,-c.gravity,0, 1/60);  world=physics.world;
     hp = new OimoHelper(scene);
-    world = new OIMO.World({gravity: [0,-9.8,0]})
+    world = new OIMO.World({gravity: [0,-c.gravity,0]})
     levels = new canBallLevels(c, hp, ballControls)
+    velocitySqLimit = (c.ballRad/world.timeStep); 
+    oldTimeStep = world.timeStep    
 }
 var lastTime;var i;
 function animate(time) {
     //TWEEN.update();
-    // controls.update();
     requestAnimationFrame( animate );
 
     // if(time && lastTime){
@@ -156,8 +164,8 @@ function animate(time) {
     //     particle.tick(dt)
     // }
     world.step();
+    flyingCheck();
 
-    // cannonDebugRenderer.update();
     renderer.clear();
     renderer.render( scene, camera );
     //ui.render(renderer);    
@@ -194,29 +202,96 @@ function clearLevel(){
     }
   });  
   ballControls.arrBall.splice(0,ballControls.arrBall.length);
+  
+  flyingBalls.forEach(function(flyingBall, index) {
+        flyingBalls.splice(index,1)
+        world.removeRigidBody(flyingBall)
+        scene.remove(flyingBall.mesh)
+        flyingBall.mesh = null;
+        flyingBall = null;
+    })
 }
 
-function checkResult(){
-    if (ballControls.arrBall.length === 0 && levels.nTarget > 0){
-        console.log('failed')
-        return;
+function initLevel(index){
+    //far plane
+    wall = hp.addBox(c.roomWidth*2, 80,4*c.canRad,   0,0,-c.disdanceHalf-2*c.canHeight, {restitution:0.005});
+    ballControls.arrTarget.push(wall);
+    //ground
+    ground = hp.addBox(c.roomWidth, 0.2,3*c.ballRad,  0,c.groundY -0.1 ,c.disdanceHalf);
+
+    levels.go(index)
+    clearInterval(checkfun);  checkfun = setInterval(checkResult1, 1000)
+}
+var flyingBalls = []
+var velocitySqLimit, oldTimeStep, checkfun;
+var ballProcess = {
+  zero : new THREE.Vector3(),
+  selectBall : function (){
+    controls.enabled = false;
+  },
+  throwBall : function (ball, to, delta, tDist){
+    controls.enabled = true;
+    var flyingBall = ball.body;
+
+    to.sub(flyingBall.position).normalize()
+    var temp = tDist/delta;
+    console.log('tD tT  tv', tDist, delta, temp)
+    to.multiplyScalar(temp*c.forceFactor)
+    flyingBall.linearVelocity.copy(to)  //flyingBall.applyImpulse(this.zero, to);
+
+// var to = new THREE.Vector3();
+// to.set(0,c.shootHeight,-38)
+// to.normalize()
+// to.multiplyScalar(c.forceFactor)
+// flyingBall.linearVelocity.copy(to)
+    if (Math.abs(flyingBall.linearVelocity.z) >= velocitySqLimit) {
+        var dist2NearestZ = ball.body.position.z - levels.nearestZ ;
+        var distOneSteps = world.timeStep*(-ball.body.linearVelocity.z);
+        var distModLeft = dist2NearestZ % distOneSteps;
+        flyingBall.changeStepAtPosZ = ball.body.position.z - (dist2NearestZ - distModLeft) + 0.01
+        flyingBall.newTimeStep = c.ballRad/(-ball.body.linearVelocity.z)
+
+        console.log('change at:',flyingBall.changeStepAtPosZ, 'v',flyingBall.linearVelocity.z, 'vLmt', velocitySqLimit)
     }
-    if (levels.nTarget <= 0){
-        console.log('succeed')
-        return;
-    }
-    ballControls.arrBall.forEach(function(item, index) {
-        if (item.position.y < 0){
-            if (item.body){
-                world.removeRigidBody(item.body)
-                item.body = null;
-            }
-            scene.remove(item)
-            ballControls.arrBall.splice(index,1)
+    flyingBalls.push(flyingBall)
+    var index = ballControls.arrBall.indexOf(flyingBall.mesh)
+    ballControls.arrBall.splice(index, 1)
+    ball.body.onCollide = function(bodyOther, pos){
+        if (bodyOther !== ground.body){
+            particle.createExplosion(pos)
         }
-    });
+    }
+  }
+}
+function flyingCheck(){
+    var minTimeStep = oldTimeStep;
+    flyingBalls.forEach(function(flyingBall, index) {
+        var p = flyingBall.position;
+        if (p.y < 0|| p.x < -c.roomWidth || p.x > c.roomWidth){
+            flyingBalls.splice(index,1)
+            world.removeRigidBody(flyingBall)
+            scene.remove(flyingBall.mesh)
+            flyingBall.mesh = null;
+            flyingBall = null;
+            return;
+        }
+        // console.log('v', flyingBall.linearVelocity.z, 'p', flyingBall.position)
+        if (Math.abs(flyingBall.linearVelocity.z) < velocitySqLimit)
+            return;
+
+        if (flyingBall.position.z < flyingBall.changeStepAtPosZ)
+        {
+            if (flyingBall.newTimeStep < minTimeStep)
+                minTimeStep = flyingBall.newTimeStep;
+        }
+    })
+    if (minTimeStep !== world.timeStep) {
+        console.log('setTimeStep', minTimeStep)
+        world.setTimeStep(minTimeStep);
+    }
     ballControls.arrTarget.forEach(function(item, index) {
-        if (item.position.y < 0){
+        var p = item.position;
+        if (p.y < 0|| p.x < -c.roomWidth || p.x > c.roomWidth){
             if (item.body){
                 world.removeRigidBody(item.body)
                 item.body = null;
@@ -228,51 +303,39 @@ function checkResult(){
     });
 }
 
-function initLevel(index){
-    //far plane
-    wall = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth*2, 80, 1, 1 ),
-                                  new THREE.MeshLambertMaterial( { color: 0xf8f8f8 ,visible:false} ) );
-    wall.position.set(0, 20, -c.disdanceHalf - 10)
-    scene.add(wall);
-    ballControls.arrTarget.push(wall);
-    //ground
-    // ground = new THREE.Mesh( new THREE.PlaneGeometry( c.roomWidth, 3*c.ballRad, 1, 1 ), new THREE.MeshLambertMaterial( { color: 0xf0f0f0 } ) );
-    // ground.quaternion.setFromAxisAngle(new THREE.Vector3(1,0,0), -Math.PI / 2);
-    // ground.body = physics.addBody( ground, 0 );  scene.add(ground);
-    // ground.body.position.set(0,c.groundY,c.disdanceHalf)
-    ground = hp.addBox(c.roomWidth, 0.2,3*c.ballRad,  0,c.groundY -0.1 ,c.disdanceHalf);
-
-    levels.go(index)
-}
-
-var ballProcess = {
-//   zero : new CANNON.Vec3(0,0,0),
-  zero : new THREE.Vector3(),
-  selectBall : function (){
-    controls.enabled = false;
-    checkResult()
-  },
-  throwBall : function (ball, to,delta){
-    controls.enabled = true;
-    to.sub(ball.position).normalize()
-    to.divideScalar(delta).multiplyScalar (c.forceFactor)
-    // ball.body.wakeUp();
-    // ball.body.applyLocalImpulse(to, this.zero);
-    ball.body.applyImpulse(this.zero, to);
-    ball.body.addEventListener("collide",function(e){
-        if (e.body !== ground.body){
-            var pos = new THREE.Vector3()
-            e.contact.bi.position.vadd(e.contact.ri, pos)
-            particle.createExplosion(pos)
+function checkResult1(){
+    if (levels.nTarget <= 0){
+        console.log('succeed')
+        c.level++;
+        c.go()        
+        return;
+    }
+    if (ballControls.arrBall.length === 0){
+        if (flyingBalls.length === 0){
+            setTimeout(checkResult2, 3000)
+        }else{
+            setTimeout(checkResult2, 6000)           
         }
-    })
-  }
+        clearInterval(checkfun);  checkfun = null;
+    }
+}
+function checkResult2(){
+    if (levels.nTarget <= 0){
+        console.log('succeed')
+        c.level++;
+        c.go()
+    }
+    else{
+        console.log('failed')
+        c.go()
+    }
 }
 
+
+initGui()
 initThree();
 initLevel(0);
 animate();
-
 </script>
 </body>
 </html>
