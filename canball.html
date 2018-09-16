@@ -24,7 +24,7 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     </head>
     <body>
-        <!-- <div id="blocker"></div> -->
+        <div id="blocker"></div>
         <script src="Three.js"></script>
         <script src="OrbitControls.js"></script>
         <!-- <script src="cannon.js"></script> -->
@@ -109,10 +109,11 @@ var camera, scene, renderer, particle, ballControls, physics,world, levels;
 var velocitySqLimit,oldTimeStep
 var controls = {}
 function initThree() {
-    // var container = document.getElementById('blocker');
-    // var W = container.offsetWidth, H = container.offsetHeight;
+    var container = document.getElementById('blocker');
+    var W = container.offsetWidth, H = container.offsetHeight;
 
-    var W = window.innerWidth, H = window.innerHeight;
+    // var container = document.createElement( 'div' );  document.body.appendChild( container );  
+    // var W = window.innerWidth, H = window.innerHeight;
     console.log(window.innerHeight)
     // scene
     scene = new THREE.Scene();
@@ -138,7 +139,7 @@ function initThree() {
     // renderer.setClearColor( scene.fog.color );
     renderer.autoClear = false; // To allow render overlay on top of sprited sphere
     var axesHelper = new THREE.AxesHelper( 5 );  scene.add( axesHelper );
-    var container = document.createElement( 'div' );  document.body.appendChild( container );  container.appendChild( renderer.domElement );
+    container.appendChild( renderer.domElement );
 
     // controls = new THREE.OrbitControls( camera, renderer.domElement );
     // controls.target.set (0, 5, 0)
