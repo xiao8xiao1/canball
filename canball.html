@@ -15,7 +15,7 @@
                 position: absolute;
                 top:0px;
                 left:0px;
-                width: 304px;
+                width: 304px;  
                 height: 540px; 
                 background-color: rgb(255,0,0);
                 overflow: hidden;
@@ -81,9 +81,9 @@ function initGui(){
 //to wx
 var c = new function () {
     this.gravity = 20
-    this.cameraY = 20
-    this.cameraZ = 47
-    this.LookatY = 20
+    this.cameraY = 15
+    this.cameraZ = 30
+    this.LookatY = 15
     this.LookatZ = 0
     this.zoom = 1
     this.disdanceHalf = 20
@@ -114,7 +114,7 @@ function initThree() {
 
     // var container = document.createElement( 'div' );  document.body.appendChild( container );  
     // var W = window.innerWidth, H = window.innerHeight;
-    console.log(window.innerHeight)
+    console.log(window.innerHeight, W, H)
     // scene
     scene = new THREE.Scene();
     // scene.fog = new THREE.Fog( 0xffffff, 500, 10000 );
