@@ -118,6 +118,35 @@ var canBallLevels = function(c, hp, ballControls){
     {
         var zPos = -c.disdanceHalf+canRad, yPos=0;
         addDesk(c.deskHight, zPos); yPos+=c.deskHight;
+        pileUpTriangle(5,5,  0,yPos,zPos)
+        addBalls(5)
+    })     
+    levelFuncs.push(function()
+    {
+        var zPos = -c.disdanceHalf+canRad, yPos=0;
+        addDesk(c.deskHight, zPos); yPos+=c.deskHight;
+        pileUpTriangle(6,6,  0,yPos,zPos)
+        addBalls(6)
+    })         
+    levelFuncs.push(function()
+    {
+        var zPos = -c.disdanceHalf+canRad, yPos=0;
+        addDesk(c.deskHight, zPos); yPos+=c.deskHight;
+        pileUpTriangle(7,6,  0,yPos,zPos)
+        addBalls(7)
+    })         
+    levelFuncs.push(function()
+    {
+        var zPos = -c.disdanceHalf+canRad, yPos=0;
+        addDesk(c.deskHight, zPos); yPos+=c.deskHight;
+        pileUpTriangle(8,6,  0,yPos,zPos)
+        addBalls(8)
+    })        
+    
+    levelFuncs.push(function()
+    {
+        var zPos = -c.disdanceHalf+canRad, yPos=0;
+        addDesk(c.deskHight, zPos); yPos+=c.deskHight;
         pileUp111(0, yPos,zPos, 0)
         pileUp111(-canWidth-0.5*ballWidth, yPos,zPos,-0.2*canWidth)
         pileUp111( canWidth+0.5*ballWidth, yPos,zPos,0.2*canWidth)
