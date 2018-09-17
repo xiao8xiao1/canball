@@ -86,7 +86,7 @@ var c = new function () {
     this.LookatY = 15
     this.LookatZ = 0
     this.zoom = 1
-    this.disdanceHalf = 20
+    this.disdanceHalf = 15
     this.forceFactor = 0.1
     this.groundY = 9
     this.roomWidth = 30
@@ -148,7 +148,7 @@ function initThree() {
     ballControls = new BallControls(camera, renderer.domElement, ballProcess);
     // physics = new CannonHelper(0,-c.gravity,0, 1/60);  world=physics.world;
     hp = new OimoHelper(scene);
-    world = new OIMO.World({gravity: [0,-c.gravity,0]})
+    world = new OIMO.World({gravity: [0,-c.gravity,0], iterations:10})
     levels = new canBallLevels(c, hp, ballControls)
     velocitySqLimit = (c.ballRad/world.timeStep); 
     oldTimeStep = world.timeStep    
